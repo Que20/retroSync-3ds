@@ -1,0 +1,23 @@
+CXX ?= c++
+CC ?= cc
+SANITIZE ?= -fsanitize=address,undefined -fno-omit-frame-pointer
+CPPFLAGS := -Iinclude -Ithird_party/cjson -DCJSON_NESTING_LIMIT=64
+CXXFLAGS := -std=c++17 -Wall -Wextra -Werror -g -O1 $(SANITIZE)
+CFLAGS := -std=c11 -Wall -Wextra -Werror -g -O1 $(SANITIZE)
+CURL_CFLAGS := $(shell pkg-config --cflags libcurl 2>/dev/null)
+CURL_LIBS := $(shell pkg-config --libs libcurl 2>/dev/null || echo -lcurl)
+CORE := source/core/core.cpp source/core/api.cpp
+.PHONY: test clean
+test: build-host/core_tests build-host/net_probe
+	./build-host/core_tests
+	python3 tests/network_tests.py ./build-host/net_probe
+build-host:
+	mkdir -p $@
+build-host/cJSON.o: third_party/cjson/cJSON.c third_party/cjson/cJSON.h | build-host
+	$(CC) $(CPPFLAGS) $(CFLAGS) -Wno-deprecated-declarations -c $< -o $@
+build-host/core_tests: tests/core_tests.cpp $(CORE) include/retrosync/core.hpp include/retrosync/api.hpp build-host/cJSON.o
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) tests/core_tests.cpp $(CORE) build-host/cJSON.o -o $@
+build-host/net_probe: tests/net_probe.cpp source/core/core.cpp source/core/http.cpp include/retrosync/api.hpp include/retrosync/core.hpp | build-host
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CURL_CFLAGS) tests/net_probe.cpp source/core/core.cpp source/core/http.cpp $(CURL_LIBS) -pthread -o $@
+clean:
+	rm -rf build-host

@@ -1,0 +1,13 @@
+build/
+build-host/
+dist/
+*.elf
+*.map
+*.smdh
+*.3dsx
+*.cia
+.DS_Store
+config/settings.ini
+settings.ini
+settings.ini.*
+__pycache__/
