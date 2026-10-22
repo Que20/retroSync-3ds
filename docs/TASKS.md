@@ -16,7 +16,7 @@ Software validation and physical-console validation are tracked separately.
 - [x] Confirm existing real-server save metadata unchanged and remove created test data/device.
 - [x] Native graphical dual-screen UI; remove redundant screenshot guide.
 - [x] Complete emulator input/layout/end-to-end transfer acceptance, including actual ARM live-server save transfers.
-- [ ] Final native CIA, packaging, CI and public release checks.
+- [x] Final native CIA, packaging, CI and public release checks.
 - [ ] Physical New 3DS: FBI install/HOME boot, Wi-Fi/TLS, SD errors, suspend/resume and cancellation timing.
 - [ ] Real gameplay round trips through open_agb_firm and the remote producer for all supported battery types.
 

@@ -65,6 +65,15 @@ save IDs/hashes/update times checked unchanged. The native CIA version 1024 pass
 and CIA-only development server pass 12 additional packaging/integrity checks. Public screenshots use only synthetic
 data from `scripts/mock_romm.py`; native PNG captures are copied without image editing.
 
+## Published release verification
+
+[Version 1.0.0](https://github.com/Que20/retroSync-3ds/releases/tag/v1.0.0) was built by GitHub Actions after
+both desktop and ARM jobs passed. The public CIA and ZIP were downloaded again: standalone and per-file SHA256
+checks passed, the bundled CIA matched the standalone CIA, and the native CIA verifier accepted title/version,
+executable, icon/banner and TLS roots. The README QR was decoded and its `latest/download` response matched that CIA.
+Private test credentials were absent from the public archive. The full desktop suite also passed locally on macOS
+and Linux with address/undefined-behavior sanitizers. TLS fixtures use a CA/leaf chain and explicit HTTP body lengths.
+
 ## Remaining hardware acceptance
 
 FBI QR installation, HOME Menu launch, physical Wi-Fi/TLS/clock behavior, real SD power-loss/read-only/full-card cases,
