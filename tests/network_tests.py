@@ -40,6 +40,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             return
         self.send_response(200)
+        payload = b'{"SYSTEM":{"VERSION":"5.4.0"}}'
+        length = 512 * 1024 + 1 if self.path == "/api/large" else 40 * 1024 if self.path == "/api/slow" else len(payload)
+        # Explicit framing avoids relying on TLS EOF as the HTTP body delimiter.
+        self.send_header("Content-Length", str(length))
         self.end_headers()
         try:
             if self.path == "/api/large":
@@ -50,7 +54,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     self.wfile.flush()
                     time.sleep(0.05)
             else:
-                self.wfile.write(b'{"SYSTEM":{"VERSION":"5.4.0"}}')
+                self.wfile.write(payload)
         except (BrokenPipeError, ConnectionResetError, ssl.SSLError):
             pass
 
