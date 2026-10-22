@@ -129,6 +129,63 @@ then link that slot as described above. RetroSync does not convert a state file 
 - **Scope:** no automatic launching, background/bulk sync, automatic deletion sync, or automatic backup pruning.
   Histories above 512 entries / 512 KiB and individually oversized metadata can exceed V1's bounded-memory limits.
 
+## Features / TODO
+
+Checked items are available in V1. Unchecked items are proposed work, not supported features or release dates.
+The platform priorities below are engineering estimates: an existing emulator does not establish RetroSync save compatibility.
+
+### Available today
+
+- [x] Username/password login, session renewal, library browsing and search.
+- [x] Verified GBA/ZIP downloads and persistent per-account installation tracking.
+- [x] open_agb_firm battery-save tracking, explicit byte-format conversion and manual two-way RomM sync.
+- [x] Conflict choices, local backups, retained remote history and interrupted-transfer safeguards.
+- [x] Native dual-screen UI and FBI QR / SD-card installation.
+
+### Realistic platform expansion
+
+These are **future adapter candidates** on New Nintendo 3DS. V1 remains GBA-only.
+Performance and game compatibility belong to the chosen runner; ROM transfer and portable save compatibility
+must be validated separately, including the producer used by RomM on other devices.
+
+| Candidate | Existing runner / primary reference | Assessment and work needed in RetroSync |
+| --- | --- | --- |
+| **GB / GBC** | [GameYob through TWiLight Menu++](https://wiki.ds-homebrew.com/ds-index/emulators) | Best first expansion: small ROMs and file-based battery saves. Add `.gb`/`.gbc` checks, configured paths, mapper/save-size validation and RTC handling where applicable. |
+| **NES** | [VirtuaNES for 3DS](https://github.com/bubble2k16/emus3ds/blob/master/readme-virtuanes.md) | Strong candidate. Add ROM/mapper checks and battery-save mapping; many games have no battery save to sync. States are a separate format. |
+| **SNES** | [Snes9x for 3DS](https://github.com/bubble2k16/snes9x_3ds) | Realistic, with per-game performance limits, especially enhancement-chip games. Add ROM checks and validate SRAM layout against the remote producer. |
+| **Mega Drive / Genesis, Master System** | [PicoDrive for 3DS](https://github.com/bubble2k16/emus3ds/blob/master/readme-picodrive.md) | Realistic cartridge targets. Validate ROM encodings, SRAM/EEPROM layout and byte order; start with single-file cartridge games. |
+| **Nintendo DS** | [TWiLight Menu++ / nds-bootstrap](https://github.com/DS-Homebrew/TWiLightMenu) | High-value native DS-mode target, without DS emulation overhead. Add `.nds` validation, larger streamed downloads, configured save locations/slots and raw save sizing; emulator containers need explicit conversion. |
+| **PC Engine / TurboGrafx-16** | [TemperPCE for 3DS](https://github.com/bubble2k16/emus3ds/blob/master/readme-temperpce.md) | Plausible later cartridge target. Validate backup-memory layout; CD games require a separate multi-file/BIOS-aware design. |
+| **Native Nintendo 3DS saves** | [Checkpoint exports](https://github.com/bernardogiordano/Checkpoint) | Separate, more complex project: map an installed title to a RomM game and sync exported backup directories with explicit restore steps. Copying a `.3ds` file is not title installation, and live title save archives are not ordinary `.sav` files. |
+| **PlayStation** | [PCSX ReARMed on RetroArch 3DS](https://docs.libretro.com/guides/install-3ds2ds/) | Experimental, lower priority. Performance varies by game/build; large disc images, multi-file/multi-disc layouts, BIOS requirements and memory-card formats add substantial work. |
+
+Recommended order: **validate GBA on hardware → build reusable runner profiles → GB/GBC → NES/SNES/Mega Drive → DS**.
+DS is also a good earlier branch if it is the main use case. CD systems and native 3DS save management come later.
+RetroSync is a library/sync client: adding a platform does not add or improve an emulator.
+
+### Next priorities
+
+- [ ] Complete real-console acceptance: FBI/HOME boot, Wi-Fi, sleep/resume, cancellation and SD error recovery;
+  verify actual gameplay round trips for each supported GBA battery type.
+- [ ] Replace GBA-specific installation/save assumptions with tested platform and runner profiles:
+  extensions, validation, ROM/save paths, save encodings and RomM producer identity.
+- [ ] Add GB/GBC first, with local/remote gameplay fixtures and conflict/recovery tests before marking it supported.
+- [ ] Add explicit adapters for selected RetroArch cores and standalone runners; honor configured save-directory overrides.
+- [ ] Add a save-link wizard with clearer format guidance, local-file discovery and a preview of which copy will change.
+- [ ] Expose retained backups/history in the UI with restore previews and optional retention limits.
+
+### Later improvements
+
+- [ ] Offline installed-game view, cached library metadata, resized cover art and filters for installed/changed games.
+- [ ] Download queue, bulk-sync preview and progress/ETA while RetroSync is open; retain per-game conflict decisions.
+- [ ] Resume interrupted downloads only when server range support and file-identity checks make it safe.
+- [ ] Broader tested RomM-version support, negotiated sync sessions and browser sign-in/pairing if the server supports it.
+- [ ] Investigate save-state backup for runners that support it, scoped to an exact compatible core/build and ROM hash.
+  No universal state conversion or cross-emulator state sync is promised; open_agb_firm remains battery-save-only.
+- [ ] Optional runner launch/return integration where supported, and release-update notification with an FBI install handoff.
+
+Detailed V1 acceptance status: [development checklist](docs/TASKS.md).
+
 ## Notes
 
 - Save writes target **RomM 5.4.0**. The account needs library, asset and device read/write permissions; no admin privileges are required.
