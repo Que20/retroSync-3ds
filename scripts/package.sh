@@ -12,6 +12,10 @@ if [ -d docs/assets ]; then
     mkdir -p "$stage/docs/assets"
     cp docs/assets/*.png "$stage/docs/assets/"
 fi
+if [ -d docs/screenshots ]; then
+    mkdir -p "$stage/docs/screenshots"
+    cp docs/screenshots/*.png "$stage/docs/screenshots/"
+fi
 cp third_party/licenses/* "$stage/third_party/licenses/"
 cp third_party/cjson/LICENSE "$stage/third_party/cjson/"
 # Example only, never copy the user's live settings or credentials.

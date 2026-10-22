@@ -72,6 +72,11 @@ not an FBI installation or HOME launch test.
 
 ## Explicitly unverified
 
+Follow-up on 2026-10-22: the release 3DSX now boots in Azahar 2126.2 on macOS Apple Silicon. Platform/game browsing,
+read-only save history and settings were exercised against the loopback synthetic HTTP server, with native PNG
+captures in `docs/screenshots/`. This adds emulator evidence only; the real-console/live-server items below remain
+unverified. See SCREENSHOTS.md for version, archive digest and reproduction steps.
+
 - Real New 3DS boot, graphics/input/touch layout, sleep/resume and memory usage.
 - Real Wi-Fi/SDK DNS/connect/cancel behavior and TLS against public/private CAs on ARM.
 - Live authenticated RomM deployment and its exact schemas/visibility policies.

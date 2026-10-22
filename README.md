@@ -16,6 +16,14 @@ The current prototype lets you:
 
 **ROM downloads and save synchronization are not implemented yet.**
 
+Real application captures from **Azahar 2126.2**, using synthetic RomM API data. These are not mockups or hardware tests.
+
+| Game library | Settings |
+| --- | --- |
+| ![Game library running in Azahar with synthetic data](docs/screenshots/games.png) | ![Settings running in Azahar with a masked demo token](docs/screenshots/settings.png) |
+
+[More screenshots and setup instructions](docs/SCREENSHOTS.md).
+
 ## Installation
 
 You need a New Nintendo 3DS with **Luma3DS and FBI**.
@@ -57,5 +65,6 @@ Press **SELECT** to open Settings. Enter your RomM server URL and a client API t
 - [Downloads and releases](https://github.com/Que20/retroSync-3ds/releases)
 - [RomM documentation](https://docs.romm.app/latest/) · [open_agb_firm setup](https://github.com/profi200/open_agb_firm#setup)
 - [Roadmap](docs/TASKS.md) · [Architecture](docs/ARCHITECTURE.md)
+- [Screenshots and emulator setup](docs/SCREENSHOTS.md)
 - [API compatibility](docs/API_COMPATIBILITY.md) · [Emulator and save formats](docs/EMULATOR_MATRIX.md)
 - [Build and test evidence](docs/BUILD_VERIFICATION.md) · [CIA packaging](docs/CIA_PACKAGING.md) · [Hardware test plan](docs/HARDWARE_TEST_PLAN.md)
