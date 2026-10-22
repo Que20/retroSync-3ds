@@ -112,19 +112,34 @@ with server() as port:
     check("Invalid API path" in error, "Absolute API path injection rejected")
 
 with tempfile.TemporaryDirectory(prefix="retrosync-tls-") as temp:
-    cert, key = pathlib.Path(temp) / "cert.pem", pathlib.Path(temp) / "key.pem"
+    root = pathlib.Path(temp)
+    cert, key, ca = root / "cert.pem", root / "key.pem", root / "ca.pem"
+    ca_key, csr, extensions = root / "ca.key", root / "server.csr", root / "server.ext"
+    # A real CA/leaf chain avoids TLS-backend-specific self-signed leaf rules.
     subprocess.run(["openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes",
-                    "-keyout", str(key), "-out", str(cert), "-days", "1",
-                    "-subj", "/CN=localhost", "-addext", "subjectAltName=DNS:localhost"],
+                    "-keyout", str(ca_key), "-out", str(ca), "-days", "1",
+                    "-subj", "/CN=RetroSync test CA",
+                    "-addext", "basicConstraints=critical,CA:TRUE",
+                    "-addext", "keyUsage=critical,keyCertSign,cRLSign"],
+                   check=True, capture_output=True)
+    subprocess.run(["openssl", "req", "-new", "-newkey", "rsa:2048", "-nodes",
+                    "-keyout", str(key), "-out", str(csr), "-subj", "/CN=localhost"],
+                   check=True, capture_output=True)
+    extensions.write_text("basicConstraints=critical,CA:FALSE\n"
+                          "keyUsage=critical,digitalSignature,keyEncipherment\n"
+                          "extendedKeyUsage=serverAuth\nsubjectAltName=DNS:localhost\n")
+    subprocess.run(["openssl", "x509", "-req", "-in", str(csr), "-CA", str(ca),
+                    "-CAkey", str(ca_key), "-CAcreateserial", "-days", "1",
+                    "-extfile", str(extensions), "-out", str(cert)],
                    check=True, capture_output=True)
     tls = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     tls.load_cert_chain(cert, key)
     with server(tls) as port:
-        status, error, body = probe(f"https://localhost:{port}", "/api/heartbeat", cert)
-        check(status == 200 and not error and body, "HTTPS with explicit trusted CA")
+        status, error, body = probe(f"https://localhost:{port}", "/api/heartbeat", ca)
+        check(status == 200 and not error and body, f"HTTPS with explicit trusted CA: status={status}, error={error}")
         status, error, body = probe(f"https://localhost:{port}", "/api/heartbeat")
         check("certificate verification failed" in error and not body, "Unknown CA fails closed")
-        status, error, body = probe(f"https://127.0.0.1:{port}", "/api/heartbeat", cert)
+        status, error, body = probe(f"https://127.0.0.1:{port}", "/api/heartbeat", ca)
         check("certificate verification failed" in error and not body, "Hostname mismatch fails closed")
         status, error, body = probe(f"https://localhost:{port}", "/api/heartbeat", pathlib.Path(temp) / "missing.pem")
         check("CA file missing or invalid" in error and not body, "Missing CA fails closed")
