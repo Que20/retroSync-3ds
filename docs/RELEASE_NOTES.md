@@ -1,14 +1,17 @@
-First compiling RetroSync 3DS prototype for New Nintendo 3DS with Luma3DS.
+RetroSync 3DS V1 — GBA downloads and battery-save synchronization for New Nintendo 3DS.
 
-- Dual-screen RomM library browsing, search/pagination and read-only save history.
-- Scoped API token settings, validated HTTPS and cancellable network requests.
-- Native CIA for FBI / HOME Menu; 3DSX is included in the installation ZIP.
-- Desktop safety/mock-network tests and CIA structural/hash validation run before publication.
+- Native dual-screen library and game-action UI, search, touch and transfer progress.
+- Username/password login with automatic session renewal; no API token to type and no stored password.
+- Adaptive catalog pagination handles rich metadata in real RomM libraries.
+- Verified single-file GBA / ZIP downloads, persistent installs and open_agb_firm save-path tracking.
+- Two-way named-slot battery sync for RomM 5.4.0, with Keep local / Keep remote / Cancel conflicts.
+- Preserved server history, local backups, recovery journals and uncertain-upload protection.
+- Native CIA for FBI/HOME Menu and Homebrew Launcher 3DSX in the installation ZIP.
 
-**Prototype limitations:** real-console boot/FBI installation and live authenticated RomM connectivity have not
-been tested. ROM downloads and two-way save synchronization are not implemented yet.
+Tested with synthetic integration fixtures and a real RomM 5.4.0 instance using isolated disposable test saves.
+Physical-console/FBI and real gameplay round trips remain unverified; see the hardware acceptance plan.
+GBA installation only; other platforms remain browsable. Save states, generic save containers, OIDC-only login
+and automatic game launching are not supported.
 
-Install via **FBI → Remote Install → Scan QR Code**, using the QR in the repository README, or copy the CIA to SD
-and install with FBI. No copyrighted games, BIOS, saves or credentials are included.
-
-`SHA256SUMS` covers the CIA and installation ZIP attached to this release.
+Install with the README FBI QR or copy the CIA to SD. No games, BIOS files, save bytes or credentials are included.
+`SHA256SUMS` covers the attached CIA and installation ZIP.

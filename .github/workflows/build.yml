@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev pkg-config
+      - run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev libssl-dev zlib1g-dev pkg-config
       - run: make -f Makefile.host test
   three-ds:
     runs-on: ubuntu-latest
@@ -24,9 +24,9 @@ jobs:
       - run: sh scripts/package.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: RetroSync3DS-prototype
+          name: RetroSync3DS-v1
           path: |
-            dist/RetroSync3DS-0.1.0.zip
+            dist/RetroSync3DS-1.0.0.zip
             dist/RetroSync3DS.cia
   release:
     if: startsWith(github.ref, 'refs/tags/v')
@@ -38,16 +38,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: RetroSync3DS-prototype
+          name: RetroSync3DS-v1
           path: dist
       - name: Publish verified build
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           python3 scripts/verify-cia.py dist/RetroSync3DS.cia
-          (cd dist && sha256sum RetroSync3DS.cia RetroSync3DS-0.1.0.zip > SHA256SUMS)
+          (cd dist && sha256sum RetroSync3DS.cia RetroSync3DS-1.0.0.zip > SHA256SUMS)
           gh release create "$GITHUB_REF_NAME" \
             --repo "$GITHUB_REPOSITORY" --verify-tag --latest \
             --title "RetroSync 3DS $GITHUB_REF_NAME" \
             --notes-file docs/RELEASE_NOTES.md \
-            dist/RetroSync3DS.cia dist/RetroSync3DS-0.1.0.zip dist/SHA256SUMS
+            dist/RetroSync3DS.cia dist/RetroSync3DS-1.0.0.zip dist/SHA256SUMS

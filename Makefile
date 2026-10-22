@@ -40,7 +40,7 @@ GRAPHICS	:=	gfx
 GFXBUILD	:=	$(BUILD)
 ROMFS		:=	romfs
 APP_TITLE := RetroSync 3DS
-APP_DESCRIPTION := RomM library browser prototype
+APP_DESCRIPTION := Download games and sync saves
 APP_AUTHOR := RetroSync contributors
 ICON := assets/icon.png
 #GFXBUILD	:=	$(ROMFS)/gfx
@@ -61,7 +61,7 @@ CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++17
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:= -lcurl -lmbedtls -lmbedx509 -lmbedcrypto -lz -lctru -lm
+LIBS	:= -lcitro2d -lcitro3d -lcurl -lmbedtls -lmbedx509 -lmbedcrypto -lz -lctru -lm
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
@@ -203,7 +203,7 @@ else
 #---------------------------------------------------------------------------------
 $(OUTPUT).3dsx	:	$(OUTPUT).elf $(_3DSXDEPS)
 
-$(OUTPUT).smdh: $(TOPDIR)/assets/icon.png
+$(OUTPUT).smdh: $(TOPDIR)/assets/icon.png $(TOPDIR)/Makefile $(TOPDIR)/VERSION
 
 $(OFILES_SOURCES) : $(HFILES)
 

@@ -1,87 +1,72 @@
-# Build and validation evidence
+# Build and test verification
 
-Date: **2026-10-21**. This is a prototype verification record, not a hardware certification.
+Updated 2026-10-22 for V1. Results below distinguish desktop services, the ARM application in an emulator, and
+physical hardware. No physical New Nintendo 3DS was available.
 
-## ARM build: passed
+## Reproducible build
 
-Official image:
-`devkitpro/devkitarm@sha256:116afba8df8453961de2936ffab20dd441edf4d682856c1ec8b0e53d7ed0bbf5`
-(aarch64 container host; output is 32-bit ARM for 3DS).
+Use `sh scripts/build-container.sh -j4` for the ARM build. CIA packaging additionally uses
+`sh scripts/bootstrap-cia-tools.sh` and `make cia` in the same container, then `sh scripts/package.sh`.
+The image is pinned to `devkitpro/devkitarm@sha256:116afba8df8453961de2936ffab20dd441edf4d682856c1ec8b0e53d7ed0bbf5`.
 
-Inventory measured inside the container:
+Components: devkitARM r68; libctru 2.7.0-1; citro2d 1.7.0-1; citro3d 1.7.1-2; curl 8.4.0-1;
+mbedTLS 2.28.8-1; zlib 1.3.1-1. These pinned versions describe reproducibility, not a security-advisory clearance.
+Desktop tests use system curl/OpenSSL; the ARM build uses the bundled mbedTLS path.
 
-```text
-arm-none-eabi-g++ (devkitARM) 16.1.0
-devkitARM r68-1
-libctru 2.7.0-1
-3ds-curl 8.4.0-1
-3ds-mbedtls 2.28.8-1
-3ds-zlib 1.3.1-1
-```
+CIA title ID remains `000400000F7A6300`, with version 1.0.0 (1024), allowing an update over prototype version 16.
+`verify-cia.py` verifies title/version, structure, native executable content, ExeFS/RomFS bounds and hashes, icon/banner
+and bundled TLS roots. This cannot prove FBI installation or successful execution on hardware.
 
-`make -j4` compiled application/core/cJSON, linked ELF, generated SMDH and built `.3dsx` with embedded RomFS.
-The final build completed without compiler warnings. Inspected output:
+## Automated native-service tests
 
-```text
-RetroSync3DS.elf: ELF 32-bit LSB executable, ARM, EABI5, statically linked
-RetroSync3DS.3dsx: Nintendo 3DS Homebrew Application (3DSX)
-3DSX size: 1251508 bytes
-SMDH size: 14016 bytes
-3DSX SHA256: 5b2ec5efa75571e662e4a6233bbd71260b6520e6ca670128610773728598e3ff
-```
+Run `make -f Makefile.host test` (C++17, libcurl, OpenSSL, zlib, Python 3 and pkg-config).
+AddressSanitizer and UndefinedBehaviorSanitizer are enabled.
 
-A native CIA was subsequently built for the FBI QR request (same application code, original menu icon/banner).
-Size: 922560 bytes. SHA256: `4f723ca5fb417d67c029309deb702cc873d82b44679d133c28fbb12eff530868`.
-Title ID: `000400000F7A6300`; version 0.1.0 (16). The project verifier and independent ctrtool agree on
-content/exheader/ExeFS hashes; ctrtool also validates all RomFS hash levels. Retail signature warnings are expected
-for CFW homebrew and are not claimed as valid. No hardware boot, input, Wi-Fi or SD-write success is inferred.
+| Suite | Evidence |
+| --- | --- |
+| Portable core | 165 checks: paths/URLs, OAF slots, three-way conflict/deletion policy, all battery sizes and EEPROM golden-byte conversion, strict API parsing, settings recovery |
+| HTTP/TLS | 24 checks: bearer auth, response redaction, no redirects, memory cap, cancellation, CA and hostname validation |
+| Library integration | 54 checks: password login/form encoding, refresh rotation, adaptive 20/5/1 pages, streamed ZIP install, persistent identity/paths, slot binding, two-way sync, stale conflict choices, guarded 409 and uncertain-upload recovery without blind retry |
+| Storage recovery | 29 checks: reference digests, bounded reads, retained backups, changed/untracked destination protection, interrupted rename recovery and hostile journal rejection |
+| ZIP safety | 29 checks: stored/deflated members, traversal, symlinks, duplicate games, truncation, CRC/encryption/size limits, cancellation and existing-file preservation |
+| Format HTTP round trips | SRAM 32 KiB, FLASH 64/128 KiB, EEPROM 512 bytes/8 KiB; nonuniform bytes verify both conversion directions through the actual service and HTTP path |
 
-## Desktop core tests: passed
+The synthetic fixture intentionally ties save timestamps to exercise the numeric-ID tie-breaker. Tests use generated
+homebrew-shaped ROM headers and synthetic battery bytes; no commercial game or real credential is in the repository.
 
-`make -f Makefile.host test` uses C++17, `-Wall -Wextra -Werror`, AddressSanitizer and UndefinedBehaviorSanitizer.
-Apple's compiler deprecation warnings are disabled only for the unmodified vendored cJSON C file, whose upstream
-uses bounded internal sprintf formatting. Application/test warning errors remain enabled.
+## Real RomM 5.4.0 server
 
-**165 core checks** cover three-way conflicts (including differing first-contact copies), unchanged/one-sided/missing
-and unknown content, unsafe filenames/paths/URLs, control-sequence sanitizing, INI parsing and slots 0–9, EEPROM
-golden-byte reversal and round trips, SRAM/FLASH size checks, format refusal without changing output, JSON schema
-and size validation, exact null/empty slots, encoded search, token injection, HTTP opt-in, settings commit and backup
-recovery. Synthetic fixtures deliberately omit unused fields; they are not captured production server responses.
+A user-authorized deployment was tested over validating HTTPS. Its address/account/credentials and raw metadata are
+kept outside the repository and omitted here.
 
-## Desktop integration tests: passed
+- Username/password login and session creation passed with the native HTTP service.
+- Adaptive catalog reads passed on all 19 platforms sampled, 32 pages in total; the previous oversized GBA page now
+  falls back from 20 to five items rather than failing.
+- A real GBA ZIP was downloaded, verified, extracted and tracked successfully.
+- A uniquely named temporary slot with synthetic bytes passed initial/incremental uploads, remote-to-local download,
+  conflict detection/cancellation and an explicit Keep local upload. Existing history was retained.
+- The test exposed tied-timestamp ambiguity in the summary endpoint; current-slot selection now matches RomM's
+  `(updated_at DESC, id DESC)` guarded-write order.
+- Created test rows/device were removed and the pre-existing save IDs, hashes and update times were checked unchanged.
 
-**24 mock network checks** use the same application HTTP code linked against desktop curl and Python loopback
-HTTP/HTTPS servers, with ephemeral self-signed certificates generated by OpenSSL. They check bearer headers,
-401/403/404/405/503 handling, response-body redaction on errors, redirect refusal/no credential forwarding,
-512 KiB response cap, cancellation, API-path injection refusal, trusted custom CA success, unknown CA/hostname
-mismatch/missing CA failures, connection refusal and the interactive mock's 20/20/5 pagination/search/empty platform/history.
+## ARM / Azahar
 
-No ASan/UBSan failures occurred. This does **not** test ARM libcurl/mbedTLS certificate behavior or libctru network timing.
-The interactive mock emits metadata only, including 45 synthetic GBA entries; it is not an implementation of RomM sync.
+Azahar 2126.2 official Apple Silicon build is installed only in the ignored `build-host/azahar/` directory.
+Its official archive SHA256 is `c24dec2bd5111b7d79513d686c5aece6612cdbf9737b2e6ea99cfc426f1d4aef`.
 
-## Packaging and static checks
+The actual ARM `.3dsx` boots with the new citro2d UI. Username/password entry, real HTTPS login, 19 platforms,
+adaptive GBA browsing, search and a complete real ZIP download/install passed in Azahar. The installation's SHA256
+was independently recomputed on the host and matched the persisted ARM manifest. Restart recovered the saved session
+and displayed the tracked game as ON SD. No password field is stored in the saved configuration.
 
-Shell syntax was checked for build/package scripts, Python files compiled, and ARM output type inspected.
-The install ZIP carries the `.3dsx`, SMDH, example configuration, documentation, dependency notices and SHA256SUMS.
-No real token/configuration, copyrighted game or save data is packaged. CI is defined but has not run on GitHub.
+The ARM UI additionally passed a real isolated-slot multipart upload, remote-to-local update, conflict detection,
+default Cancel (both copies unchanged), and Keep remote with a local backup. Test data/device were removed and original
+save IDs/hashes/update times checked unchanged. The native CIA version 1024 passes structure/content checks; the ZIP
+and CIA-only development server pass 12 additional packaging/integrity checks. Public screenshots use only synthetic
+data from `scripts/mock_romm.py`; native PNG captures are copied without image editing.
 
-CIA follow-up: `tests/cia_packaging_tests.py` covers valid/corrupt/truncated CIA, HTTP byte-for-byte delivery,
-HEAD/Content-Length and rejection of directory/settings/traversal URLs. The LAN download was compared to the CIA.
-The QR was independently decoded with zxing-cpp and matched the direct URL. These are delivery/format checks,
-not an FBI installation or HOME launch test.
+## Remaining hardware acceptance
 
-## Explicitly unverified
-
-Follow-up on 2026-10-22: the release 3DSX now boots in Azahar 2126.2 on macOS Apple Silicon. Platform/game browsing,
-read-only save history and settings were exercised against the loopback synthetic HTTP server, with native PNG
-captures in `docs/screenshots/`. This adds emulator evidence only; the real-console/live-server items below remain
-unverified. See SCREENSHOTS.md for version, archive digest and reproduction steps.
-
-- Real New 3DS boot, graphics/input/touch layout, sleep/resume and memory usage.
-- Real Wi-Fi/SDK DNS/connect/cancel behavior and TLS against public/private CAs on ARM.
-- Live authenticated RomM deployment and its exact schemas/visibility policies.
-- Real SD power-loss/rename/recovery behavior; settings tests use the desktop filesystem.
-- Real EmulatorJS↔OAF save compatibility/gameplay; no game save fixture was used.
-- End-to-end ROM downloads, file journaling/backups, manifest/device negotiation, two-way saves or conflicts: not implemented.
-
-See HARDWARE_TEST_PLAN.md and TASKS.md before enabling or advertising these capabilities.
+FBI QR installation, HOME Menu launch, physical Wi-Fi/TLS/clock behavior, real SD power-loss/read-only/full-card cases,
+suspend/resume, cancellation latency, memory pressure and real-game SRAM/FLASH/EEPROM round trips still require a
+physical console. See [HARDWARE_TEST_PLAN.md](HARDWARE_TEST_PLAN.md). Emulator and desktop results do not replace these.

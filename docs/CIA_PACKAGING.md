@@ -1,6 +1,6 @@
 # CIA / FBI QR installation
 
-Added 2026-10-21 at the user's request. The CIA contains the same read-only 0.1.0 prototype as the 3DSX.
+Added 2026-10-21 at the user's request. The CIA contains the same read-only 1.0.0 application as the 3DSX.
 It is built from the ARM ELF, with native code, icon, banner and CA-root RomFS. No forwarder or Homebrew Launcher
 installation is required for the CIA launch path. Modern Luma3DS is required for homebrew signatures.
 
@@ -8,7 +8,7 @@ installation is required for the CIA launch path. Modern Luma3DS is required for
 
 - Title ID: `000400000F7A6300`, private homebrew ID, stable across updates.
 - Product code: `CTR-P-RS3D`; application category, installation to SD.
-- TMD/ticket version: `0.1.0` (encoded value 16).
+- TMD/ticket version: `1.0.0` (encoded value 1024).
 - No NAND access, title installation/management privilege or backdoor SVC in the application.
 - Filesystem permissions: DirectSdmc / DirectSdmcWrite for settings and future user-managed files.
 - Services: APT:U, ac:u, cfg:u, fs:USER, gsp::Gpu, gsp::Lcd, hid:USER, ndm:u, ptm:u, soc:U.
@@ -31,7 +31,7 @@ Keep title identity consistent for upgrades; check the displayed title in FBI ra
 are applied reproducibly in ignored build directories:
 
 1. makerom's title-version enum collides with its own `VER_MINOR=19` macro. Title indices are renamed `TITLE_VER_*`
-   to prevent an out-of-bounds title-version index and preserve the requested 0.1.0 metadata.
+   to prevent an out-of-bounds title-version index and preserve the requested 1.0.0 metadata.
 2. bannertool's initialized variable-length padding array is replaced by a fixed four-byte buffer; its original
    write length remains unchanged. This lets Clang compile it.
 

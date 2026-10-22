@@ -2,7 +2,17 @@
 set -eu
 cd "$(dirname "$0")/.."
 test -s RetroSync3DS.3dsx || { echo 'Build RetroSync3DS.3dsx first.' >&2; exit 1; }
-stage=dist/RetroSync3DS-0.1.0
+stage=dist/RetroSync3DS-1.0.0
+# This exact generated staging directory belongs to the packaging script.
+python3 - <<'CLEAN'
+from pathlib import Path
+import shutil
+stage=Path('dist/RetroSync3DS-1.0.0')
+if stage.is_symlink():
+    raise SystemExit('Refusing a symlink packaging directory')
+if stage.exists():
+    shutil.rmtree(stage)
+CLEAN
 mkdir -p "$stage/3ds/RetroSync3DS" "$stage/docs" "$stage/third_party/licenses" "$stage/third_party/cjson"
 cp RetroSync3DS.3dsx "$stage/3ds/RetroSync3DS/RetroSync3DS.3dsx"
 cp RetroSync3DS.smdh "$stage/3ds/RetroSync3DS/RetroSync3DS.smdh"
@@ -28,12 +38,12 @@ fi
 python3 - <<'PY'
 from pathlib import Path
 import hashlib, zipfile
-stage = Path('dist/RetroSync3DS-0.1.0')
+stage = Path('dist/RetroSync3DS-1.0.0')
 files = sorted(p for p in stage.rglob('*') if p.is_file() and p.name != 'SHA256SUMS')
 (stage / 'SHA256SUMS').write_text(''.join(f'{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.relative_to(stage).as_posix()}\n' for p in files))
-with zipfile.ZipFile('dist/RetroSync3DS-0.1.0.zip', 'w', compression=zipfile.ZIP_DEFLATED) as z:
+with zipfile.ZipFile('dist/RetroSync3DS-1.0.0.zip', 'w', compression=zipfile.ZIP_DEFLATED) as z:
     for p in sorted(stage.rglob('*')):
         if p.is_file():
             z.write(p, p.relative_to(stage))
-print('dist/RetroSync3DS-0.1.0.zip')
+print('dist/RetroSync3DS-1.0.0.zip')
 PY

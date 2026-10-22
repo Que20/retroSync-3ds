@@ -15,7 +15,7 @@ bool validServerUrl(const std::string& url);
 std::string urlEncode(const std::string& value);
 std::string displayText(const std::string& value, size_t maxBytes);
 
-struct OafConfig { bool useSavesFolder = true; unsigned slot = 0; };
+struct OafConfig { bool useSavesFolder = true; unsigned slot = 0; std::string saveType="auto", defaultSave="sram_256k"; bool saveOverride=false; };
 bool parseOafConfig(const std::string& ini, OafConfig& config, std::string& error);
 bool oafSavePath(const std::string& rom, const OafConfig& config, std::string& path);
 enum class SaveType { Unknown, Sram32K, Flash64K, Flash128K, Eeprom512, Eeprom8K };
@@ -26,6 +26,8 @@ bool convertSave(const std::vector<uint8_t>& input, SaveType type, SaveEncoding 
 
 struct Settings {
     std::string server, token;
+    std::string refreshToken, username;
+    std::string sessionPath; // Runtime only; never serialized.
     std::string romDirectory = "sdmc:/roms/gba";
     bool allowHttp = false;
 };

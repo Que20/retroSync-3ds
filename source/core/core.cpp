@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstring>
 #include <unistd.h>
+#include <sys/stat.h>
 
 namespace rs {
 Decision reconcile(const Copy& l, const Copy& r, const Copy& b, bool compatible) {
@@ -89,6 +90,12 @@ bool parseOafConfig(const std::string& ini, OafConfig& config, std::string& erro
             if (value != "true" && value != "false") { error = "Invalid useSavesFolder"; return false; }
             candidate.useSavesFolder = value == "true";
         }
+        if (section=="game" && key=="saveType") candidate.saveType=value;
+        if (section=="advanced" && key=="defaultSave") candidate.defaultSave=value;
+        if (section=="advanced" && key=="saveOverride") {
+            if(value!="true"&&value!="false"){error="Invalid saveOverride";return false;}
+            candidate.saveOverride=value=="true";
+        }
         if (key == "saveSlot" && section == "game") {
             if (value.size() != 1 || value[0] < '0' || value[0] > '9') { error = "Invalid saveSlot"; return false; }
             candidate.slot = value[0] - '0';
@@ -136,17 +143,19 @@ bool convertSave(const std::vector<uint8_t>& in, SaveType type, SaveEncoding fro
 bool validateSettings(const Settings& s, std::string& error) {
     if (!validServerUrl(s.server)) { error = "Use a server URL without trailing slash, credentials or query"; return false; }
     if (s.server.compare(0,7,"http://") == 0 && !s.allowHttp) { error = "HTTP requires explicit LAN opt-in"; return false; }
-    if (s.token.empty() || s.token.size() > 512) { error = "Set a client API token"; return false; }
+    if (s.token.empty() || s.token.size() > 4096) { error = "Sign in to your RomM server"; return false; }
     for (unsigned char c : s.token) if (c <= 32 || c >= 127) { error = "Invalid token characters"; return false; }
+    if (s.refreshToken.size()>4096 || s.username.size()>128 || s.username.find_first_of("\r\n")!=std::string::npos) { error="Invalid session settings"; return false; }
+    for (unsigned char c:s.refreshToken) if(c<=32 || c>=127) { error="Invalid refresh token"; return false; }
     if (!safeSdDirectory(s.romDirectory)) { error = "ROM directory must be a safe sdmc:/ path"; return false; }
     return true;
 }
 static bool readSettings(const std::string& path, Settings& s, std::string& error) {
     FILE* f = std::fopen(path.c_str(), "rb");
     if (!f) { error = "No settings yet. Press SELECT to configure."; return false; }
-    char data[4097]; size_t n = std::fread(data, 1, sizeof(data), f);
+    char data[12289]; size_t n = std::fread(data, 1, sizeof(data), f);
     bool readError = std::ferror(f); std::fclose(f);
-    if (readError || n > 4096) { error = "Settings unreadable or too large"; return false; }
+    if (readError || n > 12288) { error = "Settings unreadable or too large"; return false; }
     std::string text(data,n); size_t start = 0; Settings candidate;
     while (start < text.size()) {
         size_t end = text.find('\n',start); if (end == std::string::npos) end = text.size();
@@ -155,6 +164,8 @@ static bool readSettings(const std::string& path, Settings& s, std::string& erro
         std::string k = line.substr(0,eq), v=line.substr(eq+1);
         if (k == "server") candidate.server=v;
         if (k == "token") candidate.token=v;
+        if (k == "refresh_token") candidate.refreshToken=v;
+        if (k == "username") candidate.username=v;
         if (k == "rom_directory") candidate.romDirectory=v;
         if (k == "allow_http") candidate.allowHttp=v == "true";
     }
@@ -170,7 +181,10 @@ bool loadSettings(const std::string& path, Settings& s, std::string& error) {
 static bool writeSettingsFile(const std::string& path, const Settings& s) {
     FILE* f = std::fopen(path.c_str(),"wb");
     if (!f) return false;
-    bool ok = std::fprintf(f,"server=%s\ntoken=%s\nrom_directory=%s\nallow_http=%s\n",s.server.c_str(),s.token.c_str(),s.romDirectory.c_str(),s.allowHttp?"true":"false") > 0;
+#ifndef __3DS__
+    if(fchmod(fileno(f),0600)!=0){std::fclose(f);return false;}
+#endif
+    bool ok = std::fprintf(f,"server=%s\ntoken=%s\nrefresh_token=%s\nusername=%s\nrom_directory=%s\nallow_http=%s\n",s.server.c_str(),s.token.c_str(),s.refreshToken.c_str(),s.username.c_str(),s.romDirectory.c_str(),s.allowHttp?"true":"false") > 0;
     if (std::fflush(f) != 0) ok=false;
     if (fsync(fileno(f)) != 0) ok=false;
     if (std::fclose(f) != 0) ok=false;

@@ -10,12 +10,12 @@ if [ ! -x "$makerom" ] || [ ! -x "$bannertool" ]; then
     exit 1
 fi
 mkdir -p build/cia dist
-"$bannertool" makesmdh -s 'RetroSync 3DS' -l 'RomM library browser prototype' \
+"$bannertool" makesmdh -s 'RetroSync 3DS' -l 'Download games and sync saves' \
     -p 'RetroSync contributors' -i assets/icon.png -r regionfree \
     -f visible,recordusage,nosavebackups,new3ds -o build/cia/icon.smdh
 "$bannertool" makebanner -i assets/banner.png -a assets/silence.wav -o build/cia/banner.bnr
 # Rebuild a native executable NCCH from ELF; this is not a 3DSX forwarder.
 "$makerom" -f cia -o dist/RetroSync3DS.cia -elf RetroSync3DS.elf \
     -rsf assets/retrosync.rsf -icon build/cia/icon.smdh -banner build/cia/banner.bnr \
-    -target t -exefslogo -major 0 -minor 1 -micro 0
+    -target t -exefslogo -major 1 -minor 0 -micro 0
 python3 scripts/verify-cia.py dist/RetroSync3DS.cia

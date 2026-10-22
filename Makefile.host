@@ -5,19 +5,33 @@ CPPFLAGS := -Iinclude -Ithird_party/cjson -DCJSON_NESTING_LIMIT=64
 CXXFLAGS := -std=c++17 -Wall -Wextra -Werror -g -O1 $(SANITIZE)
 CFLAGS := -std=c11 -Wall -Wextra -Werror -g -O1 $(SANITIZE)
 CURL_CFLAGS := $(shell pkg-config --cflags libcurl 2>/dev/null)
+CRYPTO_CFLAGS := $(shell pkg-config --cflags openssl)
+CRYPTO_LIBS := $(shell pkg-config --libs openssl)
 CURL_LIBS := $(shell pkg-config --libs libcurl 2>/dev/null || echo -lcurl)
 CORE := source/core/core.cpp source/core/api.cpp
 .PHONY: test clean
-test: build-host/core_tests build-host/net_probe
+test: build-host/core_tests build-host/net_probe build-host/library_probe build-host/storage_probe build-host/formats_probe
 	./build-host/core_tests
 	python3 tests/network_tests.py ./build-host/net_probe
+	python3 tests/library_tests.py ./build-host/library_probe
+	python3 tests/storage_tests.py ./build-host/storage_probe
+	python3 tests/formats_tests.py ./build-host/formats_probe
 build-host:
 	mkdir -p $@
 build-host/cJSON.o: third_party/cjson/cJSON.c third_party/cjson/cJSON.h | build-host
 	$(CC) $(CPPFLAGS) $(CFLAGS) -Wno-deprecated-declarations -c $< -o $@
 build-host/core_tests: tests/core_tests.cpp $(CORE) include/retrosync/core.hpp include/retrosync/api.hpp build-host/cJSON.o
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) tests/core_tests.cpp $(CORE) build-host/cJSON.o -o $@
-build-host/net_probe: tests/net_probe.cpp source/core/core.cpp source/core/http.cpp include/retrosync/api.hpp include/retrosync/core.hpp | build-host
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CURL_CFLAGS) tests/net_probe.cpp source/core/core.cpp source/core/http.cpp $(CURL_LIBS) -pthread -o $@
+build-host/net_probe: tests/net_probe.cpp source/core/core.cpp source/core/http.cpp source/core/api.cpp include/retrosync/api.hpp include/retrosync/core.hpp build-host/cJSON.o
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CURL_CFLAGS) tests/net_probe.cpp source/core/core.cpp source/core/http.cpp source/core/api.cpp build-host/cJSON.o $(CURL_LIBS) -pthread -o $@
 clean:
 	rm -rf build-host
+
+build-host/library_probe: tests/library_probe.cpp $(wildcard source/core/*.cpp) $(wildcard include/retrosync/*.hpp) build-host/cJSON.o
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CURL_CFLAGS) $(CRYPTO_CFLAGS) tests/library_probe.cpp $(wildcard source/core/*.cpp) build-host/cJSON.o $(CURL_LIBS) $(CRYPTO_LIBS) -lz -pthread -o $@
+
+build-host/storage_probe: tests/storage_probe.cpp source/core/storage.cpp source/core/core.cpp include/retrosync/storage.hpp build-host/cJSON.o
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CRYPTO_CFLAGS) tests/storage_probe.cpp source/core/storage.cpp source/core/core.cpp build-host/cJSON.o $(CRYPTO_LIBS) -lz -o $@
+
+build-host/formats_probe: tests/formats_probe.cpp $(wildcard source/core/*.cpp) $(wildcard include/retrosync/*.hpp) build-host/cJSON.o
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CURL_CFLAGS) $(CRYPTO_CFLAGS) tests/formats_probe.cpp $(wildcard source/core/*.cpp) build-host/cJSON.o $(CURL_LIBS) $(CRYPTO_LIBS) -lz -pthread -o $@

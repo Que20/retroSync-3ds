@@ -33,7 +33,7 @@ def verify(path):
     body = tmd_offset + 0x140
     require(struct.unpack_from(">Q", data, body + 0x4C)[0] == TITLE_ID, "Wrong TMD title ID")
     title_version, count = struct.unpack_from(">HH", data, body + 0x9C)
-    require(title_version == 16 and count == 1, "Expected version 0.1.0 and one content")
+    require(title_version == 1024 and count == 1, "Expected version 1.0.0 and one content")
     record = body + 0x9C4
     _, index, flags, record_size = struct.unpack_from(">IHHQ", data, record)
     require(index == 0 and not flags & 1 and record_size == content_size, "Unexpected encrypted/multiple content")
@@ -66,7 +66,7 @@ def verify(path):
         require(hashlib.sha256(exefs[0x200 + offset:0x200 + offset + size]).digest() == expected, f"ExeFS {name!r} hash mismatch")
     require({b".code", b"icon", b"banner"} <= names, "Missing code/icon/banner")
     require(b"-----BEGIN CERTIFICATE-----" in content[romfs_start * 512:(romfs_start + romfs_size) * 512], "CA roots missing from RomFS")
-    print(f"CIA verified: title {TITLE_ID:016X}, version 0.1.0, executable/icon/banner/RomFS, content hashes")
+    print(f"CIA verified: title {TITLE_ID:016X}, version 1.0.0, executable/icon/banner/RomFS, content hashes")
 
 
 if __name__ == "__main__":

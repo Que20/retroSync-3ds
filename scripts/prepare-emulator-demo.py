@@ -4,7 +4,9 @@ import argparse
 from pathlib import Path
 
 DEMO = """server=http://127.0.0.1:8765
+username=demo
 token=rmm_mock_token
+refresh_token=
 rom_directory=sdmc:/roms/gba
 allow_http=true
 """

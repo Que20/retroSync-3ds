@@ -85,16 +85,19 @@ bool parseSaves(const std::string& s,std::vector<SaveInfo>& out,std::string& err
     cJSON_ArrayForEach(item,j.get()) {
         SaveInfo save; double size;
         if (!id(item,"id",save.id) || !number(item,"file_size_bytes",size,9007199254740991.0)) { error="Invalid save ID or size"; return false; }
+        if(field(item,"rom_id")&&!id(item,"rom_id",save.romId)){error="Invalid save ROM ID";return false;}
+        if(field(item,"user_id")&&!id(item,"user_id",save.userId)){error="Invalid save owner ID";return false;}
         save.filename=str(item,"file_name"); save.size=static_cast<uint64_t>(size);
         save.slot=str(item,"slot",64); save.emulator=str(item,"emulator",64);
         save.archival=!cJSON_IsString(field(item,"slot"));
+        save.emulatorNull=!cJSON_IsString(field(item,"emulator"));
         save.hash=str(item,"content_hash",128); save.updated=str(item,"updated_at",64);
         result.push_back(save);
     }
     out=std::move(result); return true;
 }
-std::string romListPath(int platform,unsigned offset,const std::string& search) {
-    return "/api/roms?platform_ids="+std::to_string(platform)+"&limit="+std::to_string(PageSize)+
+std::string romListPath(int platform,unsigned offset,const std::string& search,unsigned limit) {
+    return "/api/roms?platform_ids="+std::to_string(platform)+"&limit="+std::to_string(limit)+
         "&offset="+std::to_string(offset)+"&order_by=name&order_dir=asc&with_char_index=false&with_filter_values=false&with_rom_id_index=false&with_files=false&search_term="+urlEncode(search);
 }
 }
