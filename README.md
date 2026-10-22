@@ -116,7 +116,6 @@ then link that slot as described above. RetroSync does not convert a state file 
 | **RomM / EmulatorJS GBA (mGBA)** | Raw battery-save representation supported on the RomM side. Choose the matching named slot and raw format; save states are excluded. |
 | **mGBA / VBA** battery-save files | Compatible raw bytes can be exchanged through RomM after verifying the game, chip type and representation. No direct desktop-emulator integration or folder discovery. |
 | **RetroArch / other 3DS emulators** | No local path/core adapter in V1; RetroSync does not discover or manage their saves. A raw battery file is usable only if its format is verified separately. |
-| **Azahar** | Used to test RetroSync itself, including real-server transfers. This does not validate actual GBA gameplay on a console. |
 | Other platforms (GB/GBC, NES, SNES, NDS, 3DS, etc.) | Library browsing/search/history only. No game installation or save synchronization. |
 
 - **GBA only:** one raw `.gba`, or a ZIP containing exactly one `.gba`. Maximum 64 MiB downloaded archive /
